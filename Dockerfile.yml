@@ -1,0 +1,36 @@
+# 1. Use Alpine Linux latest version as the base image
+FROM alpine:latest
+
+# 2. Install necessary packages: Python, pip, bash, and virtualenv
+RUN apk add --no-cache python3 py3-pip bash openssl
+
+# 3. Set environment variables to ensure that Python uses UTF-8
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+# 4. Copy the source code folder from local to the user's home directory
+COPY ./CTF_File_Upload_Challenge /home/scoe/app
+
+# 5. Set the home directory as the working directory
+WORKDIR /home/scoe/app
+
+# 6. Create a virtual environment for Python
+RUN python3 -m venv venv
+
+# 7: Generate a self-signed SSL certificate
+# RUN apt update && apt install -y openssl && \
+RUN openssl req -x509 -newkey rsa:4096 -nodes -keyout key.pem -out cert.pem -days 365 \
+    -subj "/C=US/ST=State/L=City/O=Company/OU=Org/CN=localhost"
+
+# 8. Install Flask inside the virtual environment
+RUN venv/bin/pip install flask
+
+# 9. Expose port 7080 for Flask app
+EXPOSE 7080
+
+# 10. Use ENTRYPOINT to ensure the virtual environment stays activated for both remove_symlinks.py and app.py
+ENTRYPOINT ["/bin/bash", "-c"]
+
+# 11. Run the remove_symlinks.py script and then start the Flask app
+CMD [". venv/bin/activate && python app.py"]
+
